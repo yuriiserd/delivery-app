@@ -1,7 +1,10 @@
 .search {
-  @apply relative my-2 flex gap-2 justify-between;
+  @apply relative my-2 flex gap-2 justify-between ;
+  [data-reach-combobox] {
+    @apply w-full max-w-full;
+  }
   [data-reach-combobox-input] {
-    @apply w-full p-2 border border-gray-300 rounded-md;
+    @apply w-full max-w-full p-2 border border-gray-300 rounded-md;
   }
 }
   

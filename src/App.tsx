@@ -3,13 +3,26 @@ import './App.css'
 import Layout from './components/layout'
 import Map from './components/map'
 import Search from './components/search'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import DeleteIcon from './components/icons/deleteIcon'
+import { getDistance } from 'geolib'
+
+type Location = {
+  lat: number,
+  lng: number
+}
+type Address = {
+  name: string,
+  distance: number,
+  coordinates: Location
+}
 
 function App() {
 
-  const [routes, setRoutes] = useState<string[] | []>([])
+  const [addresses, setAddresses] = useState<Address[] | []>([])
   const libraries: Libraries = useMemo(() => ['places'], [])
+  const [myLoaction, setMyLocation] = useState<Location | null>(null);
+  const [mapPoints, setMapPoints] = useState<Address[] | []>([])
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string,
@@ -17,15 +30,32 @@ function App() {
     language: 'en',
     libraries: libraries
   }) 
+ 
+  // Get user location
+  useEffect(() => {
 
-  function addRoute(route: string) {
-    setRoutes(prev => {
-      return [...prev, route]
-    })
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setMyLocation({lat: latitude, lng: longitude})
+      });
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+
+  }, [])
+
+  async function addAddress(address: {name: string, coordinates: Location}) {
+    if (myLoaction) {
+      const distance = getDistance({latitude: myLoaction.lat, longitude: myLoaction.lng}, address.coordinates)
+      setAddresses(prev => {
+        return [...prev, {name: address.name, distance, coordinates: address.coordinates}]
+      })
+    }
   }
 
-  function removeRoute(index: number) {
-    setRoutes(prev => {
+  function removeAddress(index: number) {
+    setAddresses(prev => {
       return prev.filter((_, i) => i !== index)
     })
   }
@@ -35,30 +65,45 @@ function App() {
   return (
     <>
       <Layout>
-        <aside className="w-1/4 p-4 bg-orange-2">
-          <h2 className="text-xl">Routes</h2>
-          <div className='relative my-2'>
-            {isLoaded && <Search addRoute={addRoute}/>}
+        <div className='flex justify-between items-center'>
+          <div className='relative my-2 mb-6 max-w-[600px] w-full'>
+            {isLoaded && <Search addAddress={addAddress}/>}
           </div>
-          <ul>
-            {routes.map((route, index) => {
-              return (
-                <li key={index} className='border rounded-md p-2 relative mb-2 pr-10'>
-                  {route}
-                  <button 
-                    className='py-2 px-1 bg-red-200 text-white absolute right-0 top-0 bottom-0 rounded-e-md hover:cursor-pointer hover:bg-orange-950 hover:text-white  text-red-800'
-                    onClick={() => removeRoute(index)}
-                  >
-                    <DeleteIcon/>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </aside>
-        {
-          !isLoaded ? <div>Loading...</div> : <Map/>
-        }
+          <button 
+            className="py-2 px-4 mb-2 bg-orange-950 text-white rounded-md hover:cursor-pointer hover:bg-orange-900"
+            onClick={() => {}}
+          >Find Best Route</button>
+        </div>
+        
+        <div className="flex gap-6">
+          <aside className="w-1/4 bg-orange-2 min-w-[350px]">
+            {addresses.length > 0  && (
+              <>
+                <h2 className="text-xl mb-4">Addresses</h2>
+                <ul>
+                  {addresses.map((address, index) => {
+                    return (
+                      <li key={index} className='border rounded-md p-2 relative mb-2 pr-10'>
+                        {address.name}
+                        <button 
+                          className='py-2 px-1 bg-red-200 text-white absolute right-0 top-0 bottom-0 rounded-e-md hover:cursor-pointer hover:bg-orange-950 hover:text-white  text-red-800'
+                          onClick={() => removeAddress(index)}
+                        >
+                          <DeleteIcon/>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </>
+            )}
+            
+          </aside>
+          
+          {
+            !isLoaded && mapPoints.length > 0 && <Map addresses={mapPoints}/>
+          }
+        </div>
         
 
       </Layout>

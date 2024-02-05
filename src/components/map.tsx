@@ -1,14 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 
-export default function Map(): JSX.Element {
+type Location = {
+  lat: number,
+  lng: number
+}
+
+export default function Map({addresses} : {
+  addresses: {name: string, distance: number, coordinates: Location}[]
+}): JSX.Element {
 
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const center = useMemo(() => ({lat: 48.3794, lng: 31.1656}), []);
+  const [myLoaction, setMyLocation] = useState<Location | null>(null);
   
+  // Get user location
   useEffect(() => {
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setMyLocation({lat: latitude, lng: longitude})
+      });
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  }, [])
+
+  // Get directions
+  useEffect(() => {
+    if (!myLoaction) return;
     const directionsService = new google.maps.DirectionsService();
-    const origin = {lat: 48.3794, lng: 31.1656};
+    const origin = myLoaction;
     const destination = {lat: 50.4501, lng: 30.5234};
 
     const waypoints = [
@@ -34,11 +57,11 @@ export default function Map(): JSX.Element {
         console.error(`error fetching directions ${result}`);
       }
     })
-  }, [])
+  }, [myLoaction])
 
   return (
-    <section className="w-3/4 p-4 bg-orange-1">
-      <h2 className="text-xl mb-2">Map</h2>
+    <section className="w-full bg-orange-1">
+      <h2 className="text-xl mb-4">Map</h2>
       <GoogleMap
         mapContainerStyle={{height: "80vh", width: "100%"}}
         zoom={6.2}
