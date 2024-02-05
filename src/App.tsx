@@ -16,7 +16,7 @@ function App() {
     region: 'us',
     language: 'en',
     libraries: libraries
-  })
+  }) 
 
   function addRoute(route: string) {
     setRoutes(prev => {
