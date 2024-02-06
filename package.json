@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@googlemaps/google-maps-services-js": "^3.3.42",
     "@reach/combobox": "^0.18.0",
     "@react-google-maps/api": "^2.19.2",
     "geolib": "^3.3.4",
