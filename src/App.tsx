@@ -5,7 +5,6 @@ import Map from './components/map'
 import Search from './components/search'
 import { useEffect, useMemo, useState } from 'react'
 import DeleteIcon from './components/icons/deleteIcon'
-import { getDistance } from 'geolib'
 
 type Location = {
   lat: number,
@@ -13,7 +12,6 @@ type Location = {
 }
 type Address = {
   name: string,
-  distance: number,
   coordinates: Location
 }
 
@@ -47,9 +45,8 @@ function App() {
 
   async function addAddress(address: {name: string, coordinates: Location}) {
     if (myLoaction) {
-      const distance = getDistance({latitude: myLoaction.lat, longitude: myLoaction.lng}, address.coordinates)
       setAddresses(prev => {
-        return [...prev, {name: address.name, distance, coordinates: address.coordinates}]
+        return [...prev, {name: address.name, coordinates: address.coordinates}]
       })
     }
   }
@@ -58,6 +55,61 @@ function App() {
     setAddresses(prev => {
       return prev.filter((_, i) => i !== index)
     })
+  }
+
+  // const client = new Client({});
+
+  async function findNextNearestAddress(currentLocation: Location, addresses: Address[]) {
+  
+    const request = {
+      origins: [{lat: currentLocation.lat, lng: currentLocation.lng}],
+      destinations: addresses.map(address => {
+        return {lat: address.coordinates.lat, lng: address.coordinates.lng}
+      }),
+      travelMode: google.maps.TravelMode.DRIVING,
+    }
+
+    const service = new google.maps.DistanceMatrixService();
+
+    const response = await service.getDistanceMatrix(request);
+    const elements = response.rows[0].elements;
+
+    let nearestAddress = addresses[0]
+    let nearestDistance = elements[0].distance.value
+
+    elements.forEach((element, index) => {
+      if (element.distance.value < nearestDistance) {
+        nearestAddress = addresses[index]
+        nearestDistance = element.distance.value
+      }
+    })
+
+    return nearestAddress
+  }
+
+  async function prepareMapPoints() {
+    if (addresses.length < 2) {
+      alert('Please add at least two addresses')
+      return
+    }
+
+    const remainingPoints = JSON.parse(JSON.stringify(addresses));
+    const pointsLength = remainingPoints.length;
+    const updatedPoints = [];
+
+    let currentNearestAddress = await findNextNearestAddress(myLoaction as Location, remainingPoints);
+    updatedPoints.push(currentNearestAddress);
+    // delete currentNearestAddress from remainingPoints
+    remainingPoints.splice(remainingPoints.map((item: Address) => item.name).indexOf(currentNearestAddress.name), 1);
+
+    while (updatedPoints.length < pointsLength) {
+      const nearestAddress = await findNextNearestAddress(currentNearestAddress.coordinates, remainingPoints);
+      updatedPoints.push(nearestAddress);
+      currentNearestAddress = nearestAddress;
+      remainingPoints.splice(remainingPoints.map((item: Address) => item.name).indexOf(currentNearestAddress.name), 1);
+    }
+    
+    setMapPoints(updatedPoints)
   }
 
   if (loadError) return <div>Error loading maps</div>
@@ -71,7 +123,7 @@ function App() {
           </div>
           <button 
             className="py-2 px-4 mb-2 bg-orange-950 text-white rounded-md hover:cursor-pointer hover:bg-orange-900"
-            onClick={() => {}}
+            onClick={() => prepareMapPoints()}
           >Find Best Route</button>
         </div>
         
@@ -101,7 +153,7 @@ function App() {
           </aside>
           
           {
-            !isLoaded && mapPoints.length > 0 && <Map addresses={mapPoints}/>
+            isLoaded && mapPoints.length > 0 && <Map key={mapPoints.length} addresses={mapPoints}/>
           }
         </div>
         

@@ -7,7 +7,7 @@ type Location = {
 }
 
 export default function Map({addresses} : {
-  addresses: {name: string, distance: number, coordinates: Location}[]
+  addresses: {name: string, coordinates: Location}[]
 }): JSX.Element {
 
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
@@ -32,18 +32,13 @@ export default function Map({addresses} : {
     if (!myLoaction) return;
     const directionsService = new google.maps.DirectionsService();
     const origin = myLoaction;
-    const destination = {lat: 50.4501, lng: 30.5234};
-
-    const waypoints = [
-      {
-        location: { lat: 49.8397, lng: 24.0297 }, // Lviv
+    const destination = addresses[addresses.length - 1].coordinates;
+    const waypoints = addresses.slice(0, -1).map(address => {
+      return {
+        location: address.coordinates,
         stopover: true,
-      },
-      {
-        location: { lat: 50.7472, lng: 25.3254 }, // Lutsk
-        stopover: true,
-      },
-    ];
+      }
+    })
 
     directionsService.route({
       origin: origin,
