@@ -1,6 +1,5 @@
 import { useState } from "react";
 import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
-import Downshift from "downshift";
 import css from './search.module.scss';
 
 type Location = {
