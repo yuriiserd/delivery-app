@@ -7,4 +7,16 @@
     @apply w-full max-w-full p-2 border border-gray-300 rounded-md;
   }
 }
+.input {
+  @apply w-full max-w-full p-2 border border-gray-300 rounded-md;
+}
+.dropdown {
+  @apply absolute top-full z-10 w-full max-w-full mt-1 bg-white border border-gray-300 rounded-md;
+  li {
+    @apply p-2 cursor-pointer;
+    &:hover {
+      @apply bg-gray-100;
+    }
+  }
+}
   

@@ -74,8 +74,8 @@ function App() {
     const response = await service.getDistanceMatrix(request);
     const elements = response.rows[0].elements;
 
-    let nearestAddress = addresses[0]
-    let nearestDistance = elements[0].distance.value
+    let nearestAddress = addresses[0];
+    let nearestDistance = elements[0].distance.value;
 
     elements.forEach((element, index) => {
       if (element.distance.value < nearestDistance) {

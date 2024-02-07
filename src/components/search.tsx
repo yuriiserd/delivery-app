@@ -1,13 +1,6 @@
 import { useState } from "react";
 import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
-import {
-  Combobox,
-  ComboboxInput,
-  ComboboxPopover,
-  ComboboxList,
-  ComboboxOption,
-} from "@reach/combobox";
-import "@reach/combobox/styles.css";
+import Downshift from "downshift";
 import css from './search.module.scss';
 
 type Location = {
@@ -33,37 +26,36 @@ export default function Search({addAddress}: {
 
   return (
     <div className={css.search}>
-      <Combobox
-        onSelect={async (address) => {
-          setValue(address, false);
-          clearSuggestions();
-          try {
-            const results = await getGeocode({ address });
-            const { lat, lng } = getLatLng(results[0]);
-            setCoordinates({lat, lng})
-          } catch (error) {
-            console.error("Error:", error);
-          }
+      <input 
+        type="text"
+        value={value}  
+        onChange={(e) => {
+          setValue(e.target.value);
         }}
-      >
-        <ComboboxInput
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            
-          }}
-          disabled={!ready}
-          placeholder="Enter an address"
-        />
-        <ComboboxPopover>
-          <ComboboxList>
-            {status === "OK" &&
-              data.map(({ place_id, description }) => (
-                <ComboboxOption key={place_id} value={description} />
-              ))}
-          </ComboboxList>
-        </ComboboxPopover>
-      </Combobox>
+        disabled={!ready}
+        placeholder="Enter an address"
+        className={css.input}
+      />
+      {status === "OK" && (
+        <ul className={css.dropdown}>
+          {data.map(({ place_id, description }) => {
+            return (
+              <li key={place_id} onClick={async () => {
+                setValue(description, false);
+                clearSuggestions();
+                try {
+                  const results = await getGeocode({address: description});
+                  const { lat, lng } = getLatLng(results[0]);
+                  setCoordinates({lat, lng});
+                } catch (error) {
+                  console.error('Error: ', error);
+                }
+              }}>{description}</li>
+            )
+          })}
+        </ul>
+      )}
+      
       <input 
         type='button' 
         value='Add Address' 
