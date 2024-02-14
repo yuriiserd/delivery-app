@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/react";
+
 export default function Layout({ children }: { children: React.ReactNode}): JSX.Element {
   return (
     <>
@@ -7,6 +9,7 @@ export default function Layout({ children }: { children: React.ReactNode}): JSX.
       <main className="p-4">
         {children}
       </main>
+      <Analytics/>
     </>
   )
 }
